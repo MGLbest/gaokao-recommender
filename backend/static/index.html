@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>高考志愿推荐系统</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f7fa;color:#333}
+.container{max-width:1200px;margin:0 auto;padding:20px}
+h1{text-align:center;color:#1a73e8;padding:20px 0;font-size:24px}
+.card{background:#fff;border-radius:12px;padding:24px;margin-bottom:20px;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.card h3{font-size:18px;margin-bottom:16px;color:#1a73e8;border-bottom:2px solid #e8f0fe;padding-bottom:8px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+.grid4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px}
+label{display:block;font-size:14px;color:#555;margin-bottom:4px;font-weight:500}
+select,input[type=number],input[type=text]{width:100%;padding:10px 12px;border:1px solid #dadce0;border-radius:8px;font-size:15px;outline:none}
+select:focus,input:focus{border-color:#1a73e8;box-shadow:0 0 0 2px rgba(26,115,232,.2)}
+.btn{background:#1a73e8;color:#fff;border:none;padding:12px 32px;border-radius:8px;font-size:16px;cursor:pointer;font-weight:600;width:100%}
+.btn:hover{background:#1557b0}
+.btn:disabled{background:#ccc;cursor:not-allowed}
+.btn-sm{background:#e8f0fe;color:#1a73e8;border:1px solid #1a73e8;padding:6px 16px;border-radius:6px;font-size:13px;cursor:pointer}
+.checkbox-group{display:flex;flex-wrap:wrap;gap:8px}
+.chip{padding:6px 14px;border-radius:20px;border:1px solid #dadce0;cursor:pointer;font-size:13px;transition:all .2s;user-select:none}
+.chip.selected{background:#1a73e8;color:#fff;border-color:#1a73e8}
+.chip.disabled{opacity:.4;cursor:not-allowed}
+
+.rec-item{border:1px solid #e0e0e0;border-radius:10px;padding:16px;margin-bottom:12px;transition:all .2s}
+.rec-item:hover{box-shadow:0 4px 12px rgba(0,0,0,.1);transform:translateY(-1px)}
+.rec-header{display:flex;justify-content:space-between;align-items:start;margin-bottom:8px}
+.rec-school{font-size:17px;font-weight:700;color:#222}
+.rec-major{font-size:15px;color:#555}
+.rec-meta{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:#777;margin-top:6px}
+.badge{display:inline-block;padding:3px 10px;border-radius:12px;font-size:12px;font-weight:600}
+.badge-985{background:#fff3e0;color:#e65100}
+.badge-211{background:#e3f2fd;color:#1565c0}
+.badge-double{background:#fce4ec;color:#c62828}
+.badge-city{background:#f3e5f5;color:#7b1fa2}
+
+.risk-chong{border-left:4px solid #ff9800}
+.risk-wen{border-left:4px solid #4caf50}
+.risk-bao{border-left:4px solid #2196f3}
+.risk-tag{font-size:13px;font-weight:700;padding:4px 12px;border-radius:6px}
+.risk-tag.chong{background:#fff3e0;color:#e65100}
+.risk-tag.wen{background:#e8f5e9;color:#2e7d32}
+.risk-tag.bao{background:#e3f2fd;color:#1565c0}
+
+.tabs{display:flex;gap:0;margin-bottom:20px;border-bottom:2px solid #e0e0e0}
+.tab{padding:12px 24px;cursor:pointer;font-size:15px;font-weight:600;color:#777;border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .2s}
+.tab.active{color:#1a73e8;border-bottom-color:#1a73e8}
+.tab .count{font-size:12px;color:#999;font-weight:400}
+
+.warning-box{background:#fff3e0;border:1px solid #ff9800;border-radius:8px;padding:12px 16px;margin:12px 0;font-size:14px;color:#e65100}
+.info-box{background:#e8f5e9;border:1px solid #4caf50;border-radius:8px;padding:12px 16px;margin:12px 0;font-size:14px;color:#2e7d32}
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+.stat-card{text-align:center;padding:12px;border-radius:8px;background:#f8f9fa}
+.stat-val{font-size:24px;font-weight:700;color:#1a73e8}
+.stat-label{font-size:12px;color:#777;margin-top:4px}
+
+.loading{text-align:center;padding:40px;color:#999;font-size:16px}
+.loading::after{content:'...';animation:dots 1.5s infinite}
+@keyframes dots{0%,20%{content:'.'}40%{content:'..'}60%,100%{content:'...'}}
+
+.priority-slider{display:flex;align-items:center;gap:16px}
+.priority-slider input[type=range]{flex:1}
+.priority-label{font-size:13px;color:#777;min-width:60px;text-align:center}
+
+.hidden{display:none}
+.rank-range{font-size:13px;color:#ff9800;font-weight:600}
+.rec-ranks{font-size:12px;color:#999}
+.footer-text{text-align:center;color:#999;font-size:12px;padding:20px;margin-top:20px}
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>高考志愿推荐系统</h1>
+  <div style="text-align:center;color:#999;font-size:12px;margin-bottom:10px">基于历年录取数据 · 位次优先 · 历史数据参考，不构成录取承诺</div>
+
+  <!-- STEP 1-7: Input Form -->
+  <div class="card">
+    <h3>填写信息</h3>
+    <div class="grid2">
+      <div>
+        <label>省份</label>
+        <select id="province"><option value="">加载中...</option></select>
+      </div>
+      <div>
+        <label>科类</label>
+        <select id="category">
+          <option value="physics">物理类</option>
+          <option value="history">历史类</option>
+          <option value="comprehensive">综合</option>
+        </select>
+      </div>
+      <div>
+        <label>高考总分</label>
+        <input type="number" id="score" placeholder="如 650" min="0" max="750">
+      </div>
+      <div>
+        <label>全省位次 (优先)</label>
+        <input type="number" id="rank" placeholder="如 8000">
+      </div>
+      <div>
+        <label>性别</label>
+        <select id="gender">
+          <option value="">不限</option>
+          <option value="male">男</option>
+          <option value="female">女</option>
+        </select>
+      </div>
+      <div>
+        <label>外语语种</label>
+        <select id="language">
+          <option value="">不限</option>
+          <option value="英语">英语</option>
+          <option value="日语">日语</option>
+          <option value="俄语">俄语</option>
+        </select>
+      </div>
+    </div>
+
+    <div style="margin-top:16px">
+      <label>选考科目</label>
+      <div class="checkbox-group" id="subjects-group">
+        <span class="chip" data-val="物理">物理</span>
+        <span class="chip" data-val="化学">化学</span>
+        <span class="chip" data-val="生物">生物</span>
+        <span class="chip" data-val="历史">历史</span>
+        <span class="chip" data-val="政治">政治</span>
+        <span class="chip" data-val="地理">地理</span>
+      </div>
+    </div>
+
+    <div style="margin-top:16px">
+      <label>视力状况</label>
+      <div class="checkbox-group" id="vision-group">
+        <span class="chip" data-val="normal">正常</span>
+        <span class="chip" data-val="color_blind">色盲/色弱</span>
+      </div>
+    </div>
+
+    <div style="margin-top:16px">
+      <label>意向城市 (多选)</label>
+      <div class="checkbox-group" id="cities-group">
+        <span class="chip" data-val="北京">北京</span>
+        <span class="chip" data-val="上海">上海</span>
+        <span class="chip" data-val="广州">广州</span>
+        <span class="chip" data-val="深圳">深圳</span>
+        <span class="chip" data-val="南京">南京</span>
+        <span class="chip" data-val="武汉">武汉</span>
+        <span class="chip" data-val="成都">成都</span>
+        <span class="chip" data-val="西安">西安</span>
+        <span class="chip" data-val="杭州">杭州</span>
+        <span class="chip" data-val="天津">天津</span>
+      </div>
+    </div>
+
+    <div style="margin-top:16px">
+      <label>意向专业大类</label>
+      <div class="checkbox-group" id="majors-group">
+        <span class="chip" data-val="计算机类">计算机</span>
+        <span class="chip" data-val="电子信息类">电子信息</span>
+        <span class="chip" data-val="临床医学类">临床医学</span>
+        <span class="chip" data-val="机械类">机械</span>
+        <span class="chip" data-val="电气类">电气</span>
+        <span class="chip" data-val="自动化类">自动化</span>
+        <span class="chip" data-val="金融学类">金融</span>
+        <span class="chip" data-val="法学类">法学</span>
+        <span class="chip" data-val="教育学类">教育</span>
+        <span class="chip" data-val="建筑类">建筑</span>
+      </div>
+    </div>
+
+    <div style="margin-top:16px">
+      <label>学费上限 (元/年，不填不限)</label>
+      <input type="number" id="max-tuition" placeholder="如 20000" min="0" style="width:200px">
+    </div>
+
+    <div style="margin-top:16px">
+      <label>权重偏好</label>
+      <div class="priority-slider">
+        <span class="priority-label">更看重学校</span>
+        <input type="range" id="priority" min="0" max="2" value="1" step="1">
+        <span class="priority-label">更看重专业</span>
+      </div>
+    </div>
+
+    <button class="btn" id="submit-btn" onclick="doRecommend()" style="margin-top:20px">
+      生成推荐
+    </button>
+  </div>
+
+  <!-- Results -->
+  <div id="results-area" class="hidden">
+    <div id="user-stats" class="stats-grid"></div>
+    <div id="warnings-area"></div>
+
+    <div class="tabs">
+      <div class="tab active" data-tab="all">全部推荐</div>
+      <div class="tab" data-tab="chong">冲刺 <span class="count" id="count-chong">0</span></div>
+      <div class="tab" data-tab="wen">稳妥 <span class="count" id="count-wen">0</span></div>
+      <div class="tab" data-tab="bao">保底 <span class="count" id="count-bao">0</span></div>
+    </div>
+
+    <div id="rec-list"></div>
+
+    <div class="footer-text">
+      以上推荐基于历年录取数据，仅供参考，不构成录取承诺。
+    </div>
+  </div>
+
+  <!-- Detail Modal -->
+  <div id="detail-modal" class="card hidden" style="position:fixed;top:10%;left:10%;right:10%;max-height:80vh;overflow-y:auto;z-index:100;box-shadow:0 8px 32px rgba(0,0,0,.2)">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <h3 id="detail-title">院校详情</h3>
+      <button class="btn-sm" onclick="document.getElementById('detail-modal').classList.add('hidden')">关闭</button>
+    </div>
+    <div id="detail-content"></div>
+  </div>
+</div>
+
+<script>
+// State
+let selectedSubjects = [];
+let selectedCities = [];
+let selectedMajors = [];
+let colorBlind = false;
+let allResults = { chong: [], wen: [], bao: [] };
+let currentTab = 'all';
+
+// Initialize
+document.addEventListener('DOMContentLoaded', () => {
+  fetch('/api/provinces').then(r=>r.json()).then(data => {
+    let sel = document.getElementById('province');
+    sel.innerHTML = data.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+  });
+
+  // Chip click handlers
+  document.querySelectorAll('.chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      let group = chip.parentElement.id;
+      if (group === 'subjects-group') {
+        chip.classList.toggle('selected');
+        selectedSubjects = [...document.querySelectorAll('#subjects-group .chip.selected')].map(c=>c.dataset.val);
+      } else if (group === 'cities-group') {
+        chip.classList.toggle('selected');
+        selectedCities = [...document.querySelectorAll('#cities-group .chip.selected')].map(c=>c.dataset.val);
+      } else if (group === 'majors-group') {
+        chip.classList.toggle('selected');
+        selectedMajors = [...document.querySelectorAll('#majors-group .chip.selected')].map(c=>c.dataset.val);
+      } else if (group === 'vision-group') {
+        document.querySelectorAll('#vision-group .chip').forEach(c=>c.classList.remove('selected'));
+        chip.classList.add('selected');
+        colorBlind = chip.dataset.val === 'color_blind';
+      }
+    });
+  });
+
+  // Tab switching
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+      tab.classList.add('active');
+      currentTab = tab.dataset.tab;
+      renderResults();
+    });
+  });
+});
+
+async function doRecommend() {
+  let btn = document.getElementById('submit-btn');
+  btn.disabled = true; btn.innerText = '计算中...';
+  document.getElementById('results-area').classList.add('hidden');
+
+  let priorityMap = {0:'school_first', 1:'balanced', 2:'major_first'};
+  let priority = priorityMap[document.getElementById('priority').value];
+
+  let payload = {
+    province_id: parseInt(document.getElementById('province').value),
+    category: document.getElementById('category').value,
+    score: parseInt(document.getElementById('score').value) || null,
+    rank: parseInt(document.getElementById('rank').value) || null,
+    subjects: selectedSubjects,
+    language: document.getElementById('language').value || '',
+    color_blind: colorBlind,
+    gender: document.getElementById('gender').value || '',
+    cities: selectedCities,
+    major_categories: selectedMajors,
+    max_tuition: parseInt(document.getElementById('max-tuition').value) || null,
+    priority: priority,
+  };
+
+  try {
+    let resp = await fetch('/api/recommend', {
+      method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload)
+    });
+    let data = await resp.json();
+    if (!data.success) { alert('请求失败'); return; }
+    allResults = data.recommendations;
+    document.getElementById('count-chong').innerText = allResults.chong.length;
+    document.getElementById('count-wen').innerText = allResults.wen.length;
+    document.getElementById('count-bao').innerText = allResults.bao.length;
+
+    // User stats
+    let u = data.user;
+    document.getElementById('user-stats').innerHTML = `
+      <div class="stat-card"><div class="stat-val">${u.eq_score||'?'}</div><div class="stat-label">等位分</div></div>
+      <div class="stat-card"><div class="stat-val">${u.same_rank_count||0}</div><div class="stat-label">同位次人数</div></div>
+      <div class="stat-card"><div class="stat-val">${u.line_diff != null ? (u.line_diff > 0 ? '+' : '') + u.line_diff : '?'}</div><div class="stat-label">线差(${u.batch_line_name||''})</div></div>
+      <div class="stat-card"><div class="stat-val">${data.total_matched}</div><div class="stat-label">匹配记录</div></div>
+    `;
+
+    // Warnings
+    let wdiv = document.getElementById('warnings-area');
+    if (data.warnings && data.warnings.length > 0) {
+      wdiv.innerHTML = data.warnings.map(w=>`<div class="warning-box">${w}</div>`).join('');
+    } else {
+      wdiv.innerHTML = `<div class="info-box">志愿分布合理，风险可控</div>`;
+    }
+
+    document.getElementById('results-area').classList.remove('hidden');
+    currentTab = 'all';
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    document.querySelector('.tab[data-tab="all"]').classList.add('active');
+    renderResults();
+  } catch(e) {
+    alert('请求失败: ' + e.message);
+  } finally {
+    btn.disabled = false; btn.innerText = '生成推荐';
+  }
+}
+
+function renderResults() {
+  let items;
+  if (currentTab === 'all') items = [...allResults.chong, ...allResults.wen, ...allResults.bao];
+  else items = allResults[currentTab] || [];
+
+  let html = items.map((r,i) => {
+    let badges = [];
+    if (r.is_985) badges.push('<span class="badge badge-985">985</span>');
+    if (r.is_211 && !r.is_985) badges.push('<span class="badge badge-211">211</span>');
+    badges.push(`<span class="badge badge-city">${r.city||'未知'}</span>`);
+    let riskCls = r.risk_level === 'chong' ? 'risk-chong' : r.risk_level === 'wen' ? 'risk-wen' : 'risk-bao';
+    let rankHistory = r.all_ranks ? r.all_ranks.slice(-4).map(x=>x.toLocaleString()).join(' → ') : '';
+
+    return `
+    <div class="rec-item ${riskCls}">
+      <div class="rec-header">
+        <div>
+          <span class="rec-school">${r.school_name}</span>
+          ${badges.join('')}
+          <span class="risk-tag ${r.risk_level}">${r.risk_label}</span>
+        </div>
+        <button class="btn-sm" onclick="showDetail(${r.school_id},${r.major_id},${r.school_major_id||0})">详情</button>
+      </div>
+      <div class="rec-major">${r.major_name}</div>
+      <div class="rec-meta">
+        <span>参考位次: <b>${(r.ref_rank||0).toLocaleString()}</b></span>
+        <span>平均位次: <b>${(r.avg_rank||0).toLocaleString()}</b></span>
+        <span>${r.risk_desc}</span>
+      </div>
+      <div class="rec-ranks">历年位次: ${rankHistory}</div>
+      ${r.single_subject_req?`<div class="rec-meta"><span style="color:#e65100">单科要求: ${r.single_subject_req}</span></div>`:''}
+      ${r.physical_exam_req?`<div class="rec-meta"><span style="color:#e65100">体检: ${r.physical_exam_req}</span></div>`:''}
+      ${r.language_req?`<div class="rec-meta"><span>语种要求: ${r.language_req}</span></div>`:''}
+      ${r.tuition?`<div class="rec-meta"><span>学费: ${r.tuition.toLocaleString()}元/年</span></div>`:''}
+      ${r.duration?`<div class="rec-meta"><span>学制: ${r.duration}</span></div>`:''}
+    </div>`;
+  }).join('');
+
+  if (!html) html = '<div class="loading">暂无匹配结果，请调整筛选条件</div>';
+  document.getElementById('rec-list').innerHTML = html;
+}
+
+async function showDetail(schoolId, majorId, smId) {
+  let modal = document.getElementById('detail-modal');
+  document.getElementById('detail-content').innerHTML = '<div class="loading">加载中</div>';
+  modal.classList.remove('hidden');
+
+  let provinceId = parseInt(document.getElementById('province').value);
+  try {
+    let resp = await fetch('/api/school-detail', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({school_id: schoolId, major_id: majorId, province_id: provinceId})
+    });
+    let data = await resp.json();
+    let d = data.detail;
+    if (!d || !d.school) { document.getElementById('detail-content').innerHTML='暂无详情'; return; }
+
+    let school = d.school, major = d.major, sm = d.school_major;
+    let history = d.history || [];
+
+    document.getElementById('detail-title').innerText = `${school.name} - ${major.name}`;
+
+    let levelBadge = '';
+    if (school.is_985) levelBadge += '<span class="badge badge-985">985</span>';
+    if (school.is_211) levelBadge += '<span class="badge badge-211">211</span>';
+
+    let html = `
+      <div class="grid2">
+        <div><b>层次:</b> ${school.level||'--'} ${levelBadge}</div>
+        <div><b>类型:</b> ${school.school_type||'--'}</div>
+        <div><b>城市:</b> ${school.city||'--'}</div>
+        <div><b>专业大类:</b> ${major.category||'--'}</div>
+        ${sm?.single_subject_req?`<div><b style="color:#e65100">单科要求:</b> ${sm.single_subject_req}</div>`:''}
+        ${sm?.physical_exam_req?`<div><b style="color:#e65100">体检要求:</b> ${sm.physical_exam_req}</div>`:''}
+        ${sm?.language_req?`<div><b>语种限制:</b> ${sm.language_req}</div>`:''}
+        ${sm?.gender_restrict?`<div><b>性别限制:</b> ${sm.gender_restrict}</div>`:''}
+        ${sm?.tuition?`<div><b>学费:</b> ${sm.tuition.toLocaleString()}元/年</div>`:''}
+        ${sm?.duration?`<div><b>学制:</b> ${sm.duration}</div>`:''}
+      </div>
+
+      <div style="margin-top:16px">
+        <b>历年录取数据</b>
+        <table style="width:100%;border-collapse:collapse;margin-top:8px">
+          <tr style="background:#e8f0fe">
+            <th style="padding:8px;text-align:left">年份</th><th style="padding:8px;text-align:left">批次</th>
+            <th style="padding:8px;text-align:right">最低分</th><th style="padding:8px;text-align:right">最低位次</th>
+            <th style="padding:8px;text-align:right">招生人数</th>
+          </tr>
+          ${history.map(h=>`
+          <tr style="border-bottom:1px solid #eee">
+            <td style="padding:8px">${h.year}</td><td style="padding:8px;font-size:13px">${h.batch||''}</td>
+            <td style="padding:8px;text-align:right">${h.min_score||'--'}</td>
+            <td style="padding:8px;text-align:right">${(h.min_rank||0).toLocaleString()}</td>
+            <td style="padding:8px;text-align:right">${h.enrollment_count||'--'}</td>
+          </tr>`).join('')}
+        </table>
+      </div>
+
+      <p style="margin-top:16px;font-size:12px;color:#999">历史数据参考，不构成录取承诺。</p>
+    `;
+    document.getElementById('detail-content').innerHTML = html;
+  } catch(e) {
+    document.getElementById('detail-content').innerHTML = '加载失败: ' + e.message;
+  }
+}
+</script>
+</body>
+</html>
