@@ -1,25 +1,11 @@
-# Don't commit the full DB (use chunks instead)
-data/gaokao_v4.db
-data/gaokao_v4.db-shm
-data/gaokao_v4.db-wal
+data/*.db
+data/*.db-*
 data/henan_gaokao.db
-
-# Temp/scratch files
+data/henan_gaokao_v3.db
 data/logs/
-__pycache__/
 *.pyc
-*.pyo
+__pycache__/
 *.log
 *.tmp
-
-# Source data (huge)
-桌面/
-../../Desktop/
-
-# IDE
-.vscode/
-.idea/
-
-# OS
-.DS_Store
-Thumbs.db
+*.output
+*.txt
